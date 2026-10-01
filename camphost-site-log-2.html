@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4A2E1B">
+<title>Camp Host Site Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0E8; --surface:#FFFFFF; --surface2:#F4F6F0;
+  --ink:#16241C; --ink2:#48584E; --line:#C9D1C4;
+  --sign:#4A2E1B; --sign-ink:#F6ECCB; --sign-dim:#CDBA92;
+  --danger:#B3261E; --focus:#2E7BFF;
+  --st-open:#178A3E;   --st-open-ink:#FFFFFF;
+  --st-res:#C62828;    --st-res-ink:#FFFFFF;
+  --st-cont:#F59300;   --st-cont-ink:#1A1200;
+  --st-unpaid:#FF2BA6; --st-unpaid-ink:#22000F;
+  --st-fcfs:#1D5FD1;   --st-fcfs-ink:#FFFFFF;
+  --map-grid:rgba(22,36,28,.09);
+  --serif:'Bitter',Georgia,'Times New Roman',serif;
+  --sans:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111512; --surface:#1A201B; --surface2:#222A24;
+    --ink:#E9EFE5; --ink2:#A9B7AC; --line:#34403A;
+    --sign:#2B1B10; --sign-ink:#F6ECCB; --sign-dim:#B9A67E;
+    --danger:#E5675E; --focus:#7FB0FF; --map-grid:rgba(233,239,229,.10);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111512; --surface:#1A201B; --surface2:#222A24;
+  --ink:#E9EFE5; --ink2:#A9B7AC; --line:#34403A;
+  --sign:#2B1B10; --sign-ink:#F6ECCB; --sign-dim:#B9A67E;
+  --danger:#E5675E; --focus:#7FB0FF; --map-grid:rgba(233,239,229,.10);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:16px/1.4 var(--sans);-webkit-text-size-adjust:100%;overflow:hidden}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+h1,h2,h3{margin:0}
+h2{font:800 20px/1.2 var(--serif);margin:22px 0 8px}
+p{margin:0 0 10px}
+.muted{color:var(--ink2)}
+.hint{color:var(--ink2);font-size:15px;margin:8px 0}
+.warn{color:var(--danger);font-weight:700}
+
+/* status colors */
+.s-open{--bg:var(--st-open);--fg:var(--st-open-ink)}
+.s-reserved{--bg:var(--st-res);--fg:var(--st-res-ink)}
+.s-continued{--bg:var(--st-cont);--fg:var(--st-cont-ink)}
+.s-unpaid{--bg:var(--st-unpaid);--fg:var(--st-unpaid-ink)}
+.s-fcfs{--bg:var(--st-fcfs);--fg:var(--st-fcfs-ink)}
+
+/* layout */
+#app{height:100%;display:flex;flex-direction:column;max-width:920px;margin:0 auto;background:var(--paper)}
+@media (min-width:940px){#app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+.top{flex:none;background:var(--sign);color:var(--sign-ink);padding:10px 14px;border-bottom:3px solid var(--sign-dim)}
+.cgpick{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:0;background:none;border:0;color:inherit;text-align:left}
+.cgname{flex:1;min-width:0;font:800 21px/1.15 var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cglist{display:grid;gap:8px;margin:12px 0}
+.cgrow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:60px;padding:6px 14px;border-radius:10px;border:2px solid var(--line);background:var(--surface);font:700 17px var(--sans);text-align:left}
+.cgrow small{display:block;font-weight:400;font-size:13px;color:var(--ink2)}
+.cgrow.on{border-color:var(--ink)}
+.cgline{display:flex;gap:8px}
+.cgline .cgrow{flex:1;min-width:0}
+.cgdel{flex:none;min-width:72px;border-radius:10px;border:2px solid var(--danger);background:transparent;color:var(--danger);font:700 15px var(--sans)}
+.datebar{display:flex;align-items:center;gap:8px;margin-top:10px}
+.ico{flex:none;width:48px;height:46px;border-radius:10px;border:1.5px solid var(--sign-dim);background:transparent;color:var(--sign-ink);font-size:26px;line-height:1}
+.datebtn{position:relative;flex:1;min-width:0;height:46px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(246,236,203,.14);font:700 18px var(--sans)}
+.datebtn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.todaybtn{flex:none;height:46px;padding:0 12px;border-radius:10px;border:1.5px solid var(--sign-ink);background:var(--sign-ink);color:var(--sign);font-weight:700}
+main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.view{display:none;padding:12px 14px 28px}
+.view.on{display:block}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:var(--sign);border-top:3px solid var(--sign-dim)}
+.tabs button{border:0;background:none;color:var(--sign-dim);min-height:60px;padding:8px 4px 10px;font:700 13px var(--sans);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.tabs button[aria-current="page"]{color:var(--sign-ink);box-shadow:inset 0 4px 0 var(--sign-ink)}
+
+/* buttons + fields */
+.btn{min-height:50px;padding:0 18px;border-radius:10px;border:2px solid var(--sign);background:var(--sign);color:var(--sign-ink);font:700 16px var(--sans)}
+.btn.sm{min-height:46px;padding:0 14px;font-size:15px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink2)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn:disabled{opacity:.45}
+.weeknav{display:flex;align-items:center;gap:8px;margin:6px 0 12px}
+.weeklabel{flex:1;text-align:center;font:800 18px/1.2 var(--serif)}
+.wkrow{cursor:pointer}
+.wkrow input{flex:none;width:26px;height:26px;accent-color:var(--sign)}
+.wkrow span{flex:1}
+.wkrow.off{opacity:.6}
+.btn.big{width:100%;min-height:56px;font-size:18px}
+.btnrow{display:flex;gap:10px;margin-top:12px}
+.btnrow.wrap{flex-wrap:wrap}
+.btnrow>.btn{flex:1 1 auto}
+.fld{margin:0 0 14px}
+.fld label,.fld .lbl,legend{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
+input[type=text],input[type=number],input[type=date],input[type=email],input:not([type]),select,textarea{
+  width:100%;min-height:50px;padding:10px 12px;border:1.5px solid var(--ink2);border-radius:8px;background:var(--surface);font-size:16px}
+textarea{min-height:84px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;border:1.5px solid var(--ink2);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg label{position:relative;flex:1;margin:0;font-weight:700}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg span{display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 6px;text-align:center;border-left:1.5px solid var(--ink2)}
+.seg label:first-child span{border-left:0}
+.seg input:checked+span{background:var(--sign);color:var(--sign-ink)}
+.seg input:focus-visible+span{outline:3px solid var(--focus);outline-offset:-3px}
+.stepper{display:grid;grid-template-columns:52px 1fr 52px;gap:6px}
+.stepper button{min-height:50px;border-radius:8px;border:1.5px solid var(--ink2);background:var(--surface);font:700 24px var(--sans)}
+.stepper input{text-align:center;font-weight:700}
+.money{position:relative}
+.money span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--ink2)}
+.money input{padding-left:26px}
+fieldset.pay{border:1.5px solid var(--line);border-radius:10px;padding:12px 12px 2px;margin:0 0 14px;background:var(--surface2)}
+legend{padding:0 6px}
+.paytotal{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0 12px;font-size:18px}
+.paytotal b{font:800 24px var(--serif)}
+
+/* chips + tiles */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:4px 11px 4px 4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-weight:700;font-size:14px}
+.chip i{font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--bg);color:var(--fg);font-size:13px}
+.chip.none i{background:transparent;border:2px dashed var(--ink2);color:var(--ink2)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tile{background:var(--surface);padding:10px 12px}
+.tile.wide{grid-column:1/-1}
+.tile b{display:block;font:800 22px/1.15 var(--serif);font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;color:var(--ink2)}
+.tile.wide b{font-size:17px}
+
+/* map */
+.editbar{display:flex;justify-content:space-between;align-items:center;margin:2px 0 8px}
+.editbar b{font:800 18px var(--serif)}
+.editpanel{border:1.5px solid var(--ink2);border-radius:10px;padding:12px;background:var(--surface);margin-bottom:8px}
+.mapbar{display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px}
+.zoom{display:flex;align-items:center;gap:8px;font-weight:700}
+.zoom .btn{min-width:48px;padding:0}
+.mapscroll{overflow:auto;border:2px solid var(--ink);border-radius:8px;max-height:62vh;background:var(--surface2);-webkit-overflow-scrolling:touch}
+.mapinner{position:relative;min-width:100%}
+.mapinner img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.mapinner.blank{aspect-ratio:4/3;background-image:linear-gradient(var(--map-grid) 1px,transparent 1px),linear-gradient(90deg,var(--map-grid) 1px,transparent 1px);background-size:32px 32px}
+.mapinner.edit{cursor:crosshair;outline:3px dashed var(--st-fcfs);outline-offset:-3px}
+.site{position:absolute;transform:translate(-50%,-50%);min-width:42px;height:42px;padding:0 5px;border-radius:10px;border:2px solid rgba(0,0,0,.6);background:var(--bg);color:var(--fg);font:700 16px/1 var(--sans);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 2px 4px rgba(0,0,0,.35)}
+.site .c{font-size:10px;line-height:1}
+.site.double{min-width:58px}
+.site.none{background:rgba(255,255,255,.9);color:#222;border:2px dashed #444}
+.mapinner.edit .site{touch-action:none;cursor:grab}
+.site.sel{outline:4px solid #fff;box-shadow:0 0 0 7px var(--st-fcfs)}
+.empty{border:2px dashed var(--ink2);border-radius:12px;padding:18px;margin-top:8px;background:var(--surface)}
+.empty h2{margin-top:0}
+
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:20}
+.sheetwrap{background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:920px;background:var(--surface);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:94%;overflow:auto;animation:rise .18s ease-out}
+@keyframes rise{from{transform:translateY(24px);opacity:.5}to{transform:none;opacity:1}}
+.sheethead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sheethead h2{margin:0}
+.sheethead p{margin:2px 0 0;color:var(--ink2)}
+.ico2{flex:none;width:46px;height:46px;border-radius:50%;border:1.5px solid var(--ink2);background:transparent;font-size:20px}
+.who{margin:10px 0 0;font-weight:700}
+.stbtns{display:grid;gap:8px;margin:12px 0 4px}
+.stbtn{display:flex;align-items:center;gap:12px;min-height:58px;padding:0 14px;border-radius:12px;border:3px solid transparent;background:var(--bg);color:var(--fg);font:700 18px var(--sans);text-align:left}
+.stbtn i{font-style:normal;flex:none;width:32px;height:32px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font-size:15px}
+.stbtn span{flex:1}
+.stbtn[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 3px var(--surface),0 0 0 6px var(--ink)}
+.screen{position:fixed;inset:0;z-index:30;background:var(--paper);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);animation:rise .18s ease-out}
+.fhead{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg,var(--sign));color:var(--fg,var(--sign-ink))}
+.fhead .ft{flex:1;min-width:0;text-align:center;line-height:1.2}
+.fhead .ft b{display:block;font:800 19px var(--serif)}
+.fhead .ft span{font-size:14px}
+.fbtn{min-width:76px;min-height:46px;border-radius:10px;border:2px solid currentColor;background:transparent;color:inherit;font-weight:700}
+.fbtn.strong{background:var(--fg,var(--sign-ink));color:var(--bg,var(--sign));border-color:var(--fg,var(--sign-ink))}
+.fbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px}
+.ffoot{flex:none;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--paper)}
+.modalwrap{z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{width:100%;max-width:520px;background:var(--surface);border-radius:14px;padding:18px;max-height:90%;overflow:auto}
+.modal h3{font:800 20px var(--serif);margin-bottom:8px}
+.ta{width:100%;min-height:180px;font:14px/1.3 ui-monospace,Menlo,Consolas,monospace}
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;max-width:90%;padding:12px 18px;border-radius:10px;background:var(--ink);color:var(--paper);font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;text-align:center}
+#toast.on{opacity:1}
+
+/* drawing */
+.drawwrap{flex:1;min-height:0;overflow:auto;padding:10px;display:flex;align-items:flex-start;justify-content:center}
+#cv{width:100%;height:auto;display:block;background:#F2F4EE;border:2px solid var(--ink);border-radius:6px;touch-action:none}
+.drawtools{flex:none;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+.tools{display:flex;gap:6px;margin:4px 0;flex-wrap:wrap}
+.tool{flex:1 1 0;min-width:56px;min-height:48px;padding:0 6px;border-radius:8px;border:1.5px solid var(--ink2);background:var(--surface);font-weight:700;font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tool i{display:block;width:22px;height:8px;border-radius:4px;border:1px solid rgba(0,0,0,.4)}
+.tool.on{background:var(--sign);color:var(--sign-ink);border-color:var(--sign)}
+
+/* setup + report */
+.mapprev{border:1.5px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface2)}
+.mapprev img{display:block;width:100%;max-height:220px;object-fit:contain}
+.nomap{padding:28px;text-align:center;color:var(--ink2)}
+.legend{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.legend li{display:flex;align-items:center;gap:10px}
+.legend i{font-style:normal;flex:none;width:34px;height:34px;border-radius:8px;background:var(--bg);color:var(--fg);display:grid;place-items:center;font-weight:700;border:2px solid rgba(0,0,0,.5)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:12px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:max-content;min-width:100%;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{font-weight:700;background:var(--surface2)}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+td:first-child,th:first-child{position:sticky;left:0;z-index:1;background:var(--surface);font-weight:700}
+th:first-child{background:var(--surface2)}
+td.sitecell{border-left:8px solid var(--bg,transparent)}
+tfoot td{font-weight:700;background:var(--surface2);border-top:2px solid var(--ink);border-bottom:0}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--fg);font-weight:700;font-size:13px}
+.rangerow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.rowsp{margin:10px 0 0}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <button class="cgpick" data-a="cgMenu" aria-label="Switch campground">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M2 20 12 4l10 16z"/><path d="M12 4v16"/></svg>
+      <span class="cgname" id="cgTitle">My campground</span>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="datebar" id="datebar">
+      <button class="ico" data-a="prevDay" aria-label="Previous day">&#8249;</button>
+      <label class="datebtn"><span id="dateText"></span><input type="date" id="dateInput" aria-label="Choose date"></label>
+      <button class="ico" data-a="nextDay" aria-label="Next day">&#8250;</button>
+      <button class="todaybtn" data-a="today" id="todayBtn">Today</button>
+    </div>
+  </header>
+  <main id="main">
+    <section class="view on" id="view-sites"></section>
+    <section class="view" id="view-report"></section>
+    <section class="view" id="view-setup"></section>
+  </main>
+  <nav class="tabs" aria-label="Sections">
+    <button data-a="tab" data-tab="sites"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M2 20 12 4l10 16z"/><path d="M12 4v16"/></svg>Sites</button>
+    <button data-a="tab" data-tab="report"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Reports</button>
+    <button data-a="tab" data-tab="setup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Setup</button>
+  </nav>
+</div>
+<input type="file" id="fileIn" accept="image/*" hidden>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+const OCC=['reserved','continued','unpaid','fcfs'];
+const ORDER=['open','reserved','continued','unpaid','fcfs'];
+const ST={
+  open:{label:'Open',short:'Open',code:'O'},
+  reserved:{label:'Reserved arrival',short:'Reserved',code:'R'},
+  continued:{label:'Continued night',short:'Continued',code:'C'},
+  unpaid:{label:'Unpaid',short:'Unpaid',code:'U'},
+  fcfs:{label:'First-come arrival',short:'First come',code:'F'}
+};
+const PASS={none:'None',senior:'Senior Pass',access:'Access Pass',annual:'Annual Pass',military:'Military Pass',other:'Other'};
+const RESST={'':'Not set',reserved:'Reserved – arrived',noshow:'Reserved – no-show',cancelled:'Reserved – cancelled',walkup:'Walk-up / first come'};
+const RES={in:'In state',out:'Out of state'};
+const CAMP={tent:'Tent',trailer:'Trailer',rv:'RV'};
+const TOOLS={ink:'#1b1b1b',road:'#8a6a43',water:'#2f7fc4',trees:'#3f8f4f',erase:'#F2F4EE'};
+const KEY='chm.state.v1', VERSION='build 9';
+const NATIVE=(typeof window!=='undefined'&&window.AndroidBridge)||null;   // set only inside the Android app
+function nativeSave(name,mime,text){
+  try{return NATIVE.saveFile(name,mime,text)||'';}catch(e){return '';}
+}
+
+/* ---------- helpers ---------- */
+const $=(s,el)=>(el||document).querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>(Number(n)||0).toLocaleString('en-US',{style:'currency',currency:'USD'});
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseD=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return ymd(d);};
+const fmtLong=s=>parseD(s).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+const clamp=v=>Math.max(0,Math.min(100,v));
+const opts=(map,val)=>Object.keys(map).map(k=>'<option value="'+esc(k)+'"'+(k===val?' selected':'')+'>'+esc(map[k])+'</option>').join('');
+
+/* ---------- state + storage ---------- */
+// root holds every campground profile; `state` is the one currently open (an entry of root.cgs).
+function newCg(id,name){return {id:id,name:name,sites:[],days:{},nextId:1};}
+let root={v:3,cur:'c1',nextC:2,cgs:[newCg('c1','My campground')]};
+let state=root.cgs[0];
+let mapImg='';   // map image of the open campground
+let storageOk=true;
+try{localStorage.setItem('chm.t','1');localStorage.removeItem('chm.t');}catch(e){storageOk=false;}
+// the first campground keeps the original map key so older saved maps still load
+const mapKey=id=>id==='c1'?'chm.map.v1':'chm.map.'+id;
+function loadMap(id){try{return localStorage.getItem(mapKey(id))||'';}catch(e){return '';}}
+function writeMap(id,val){
+  try{if(val)localStorage.setItem(mapKey(id),val);else localStorage.removeItem(mapKey(id));return true;}
+  catch(e){return false;}
+}
+function migrate(st){
+  if((st.v||1)>=2)return false;
+  Object.keys(st.days||{}).forEach(d=>{
+    const recs=st.days[d]||{};
+    Object.keys(recs).forEach(id=>{
+      const f=recs[id]&&recs[id].form;
+      if(f&&(f.nights===1||f.nights==='1'))f.nights='';
+    });
+  });
+  st.v=2;
+  return true;
+}
+// accepts the current multi-campground format or an older single-campground one
+function toRoot(o){
+  if(o&&Array.isArray(o.cgs)&&o.cgs.length){
+    o.cgs.forEach(c=>{c.sites=c.sites||[];c.days=c.days||{};c.nextId=c.nextId||1;c.name=c.name||'Campground';});
+    if(!o.cgs.some(c=>c.id===o.cur))o.cur=o.cgs[0].id;
+    o.nextC=o.nextC||o.cgs.length+1;o.v=3;
+    return o;
+  }
+  const leg=Object.assign({name:'My campground',sites:[],days:{},nextId:1},o||{});
+  migrate(leg);
+  return {v:3,cur:'c1',nextC:2,cgs:[{id:'c1',name:leg.name||'My campground',sites:leg.sites,days:leg.days,nextId:leg.nextId}]};
+}
+const curCg=()=>root.cgs.find(c=>c.id===root.cur)||root.cgs[0];
+function load(){
+  let converted=false;
+  try{
+    const s=localStorage.getItem(KEY);
+    if(s){const o=JSON.parse(s);converted=!(o&&Array.isArray(o.cgs));root=toRoot(o);}
+  }catch(e){}
+  state=curCg();root.cur=state.id;
+  mapImg=loadMap(state.id);
+  if(converted)save();
+}
+let warned=false;
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(root));}
+  catch(e){if(!warned){warned=true;toast('Could not save. Browser storage is full or blocked.');}}
+}
+function saveMap(){
+  if(!writeMap(state.id,mapImg))toast('Could not save the map image. Browser storage is full or blocked.');
+}
+function nextCgId(){
+  let n=root.nextC||root.cgs.length+1;
+  while(root.cgs.some(c=>c.id==='c'+n))n++;
+  root.nextC=n+1;
+  return 'c'+n;
+}
+function backupText(){
+  const maps={};
+  root.cgs.forEach(c=>{maps[c.id]=(c===state)?mapImg:loadMap(c.id);});
+  return JSON.stringify({v:2,root:root,maps:maps});
+}
+function switchCg(id){
+  const c=root.cgs.find(x=>x.id===id);if(!c)return;
+  root.cur=id;state=c;mapImg=loadMap(id);
+  ui.sel=null;ui.edit=false;ui.zoom=1;ui.pFrom=null;ui.pTo=null;
+  save();render();
+}
+
+const ui={tab:'sites',date:ymd(new Date()),edit:false,sel:null,zoom:1,pFrom:null,pTo:null,sheetSite:null,formSite:null};
+const siteById=id=>state.sites.find(s=>s.id===id);
+const sortedSites=()=>state.sites.slice().sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true}));
+const getRec=(d,id)=>(state.days[d]||{})[id];
+const dayRecs=d=>state.days[d]||(state.days[d]={});
+function nextLabel(){
+  const nums=state.sites.map(s=>parseInt(s.label,10)).filter(n=>!isNaN(n));
+  return String(nums.length?Math.max.apply(null,nums)+1:1);
+}
+function blankForm(site,status){
+  return {envelope:'',lastName:'',plate:'',pass:'none',passNo:'',
+    resStatus:status==='reserved'?'reserved':(status==='fcfs'?'walkup':''),
+    siteType:(site&&site.type)||'single',nights:'',campers:1,residency:'',camp:'',
+    resPay:0,cashPay:0,extraVeh:0,notes:''};
+}
+
+/* ---------- status logic ---------- */
+function setStatus(siteId,status){
+  const site=siteById(siteId),d=ui.date,recs=dayRecs(d);
+  const rec=recs[siteId]||(recs[siteId]={});
+  rec.status=status;
+  if(status==='open')rec.manual=true;else delete rec.manual;   // manual = host tapped Open on purpose
+  if(status!=='open'&&!rec.form){
+    const prev=getRec(addDays(d,-1),siteId);
+    if((status==='continued'||status==='unpaid')&&prev&&OCC.indexOf(prev.status)>-1&&prev.form){
+      rec.form=Object.assign({},prev.form,{resPay:0,cashPay:0,extraVeh:0});
+      rec.arrival=prev.arrival||addDays(d,-1);
+    }else{
+      rec.form=blankForm(site,status);
+      rec.arrival=d;
+    }
+  }
+  save();
+  return rec;
+}
+function shortDate(ds){return parseD(ds).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function continueStays(){
+  const d=ui.date,y=addDays(d,-1);
+  let n=0,ended=0,kept=0;
+  state.sites.forEach(s=>{
+    const cur=(state.days[d]||{})[s.id];
+    // a site marked Open by "Mark the rest open" (or older data) can still be continued;
+    // a site the host tapped Open, or that is already occupied today, is left alone
+    const locked=!!(cur&&cur.status&&!(cur.status==='open'&&!cur.manual));
+    // find this site's most recent occupied record, stopping if it was marked open in between
+    let p=null,pd=null;
+    for(let i=1;i<=30;i++){
+      const dd=addDays(d,-i),r=(state.days[dd]||{})[s.id];
+      if(r&&OCC.indexOf(r.status)>-1){p=r;pd=dd;break;}
+      if(r&&r.status==='open')break;
+    }
+    if(!p)return;
+    const f=p.form||blankForm(s,p.status);
+    if(['noshow','cancelled'].indexOf(f.resStatus)>-1)return;
+    const arr=p.arrival||pd,nights=parseInt(f.nights,10)||0;
+    if(nights>0){
+      const dep=addDays(arr,nights);
+      if(d>=dep){if(d===dep)ended++;return;}          // count only on the departure day
+    }else if(pd!==y){
+      return;                                          // nights unknown: only carry from yesterday
+    }
+    if(locked){kept++;return;}
+    dayRecs(d)[s.id]={status:p.status==='unpaid'?'unpaid':'continued',arrival:arr,
+      form:Object.assign({},f,{resPay:0,cashPay:0,extraVeh:0})};
+    n++;
+  });
+  save();
+  let msg;
+  if(n||ended){
+    msg=(n?(n+(n===1?' stay continued':' stays continued')):'No stays continued')+(ended?' · '+ended+' ended (nights used up)':'')+(kept?' · '+kept+' left as already marked':'');
+  }else if(kept){
+    msg='Nothing changed. '+kept+(kept===1?' site is':' sites are')+' already marked for this day (tapped Open or occupied).';
+  }else{
+    // explain what the app can see so a date mix-up is obvious
+    const found=[];
+    Object.keys(state.days).sort().forEach(dt=>{
+      const c=Object.keys(state.days[dt]).filter(id=>{const r=state.days[dt][id];return r&&OCC.indexOf(r.status)>-1&&siteById(id);}).length;
+      if(c)found.push([dt,c]);
+    });
+    if(!found.length)msg='No occupied sites are recorded on any day yet. Mark arrivals first (red or blue), then move to the next day.';
+    else msg='Nothing occupied on '+shortDate(y)+' to continue. Occupied sites are recorded on: '+found.slice(-3).map(x=>shortDate(x[0])+' ('+x[1]+')').join(', ')+'.';
+  }
+  toast(msg);
+  render();
+}
+function markRestOpen(){
+  const recs=dayRecs(ui.date);let n=0;
+  state.sites.forEach(s=>{
+    const r=recs[s.id];
+    if(!r||!r.status){recs[s.id]=Object.assign(r||{},{status:'open'});n++;}
+  });
+  save();toast(n?n+' marked open':'Every site is already marked');render();
+}
+
+/* ---------- report math ---------- */
+function lineFor(site,rec){
+  const st=(rec&&rec.status)||null,occ=OCC.indexOf(st)>-1,f=occ?(rec.form||{}):{};
+  const resPay=occ?(+f.resPay||0):0,cashPay=occ?(+f.cashPay||0):0,extra=occ?(+f.extraVeh||0):0;
+  const active=occ&&['noshow','cancelled'].indexOf(f.resStatus)<0;
+  return {site:site,st:st,occ:occ,active:active,f:f,resPay:resPay,cashPay:cashPay,extra:extra,
+    total:resPay+cashPay+extra,campers:active?(+f.campers||0):0};
+}
+function tally(lines){
+  const t={sites:lines.length,occ:0,arrivals:0,campers:0,resPay:0,cashPay:0,extra:0,total:0,
+    inS:0,outS:0,tent:0,trailer:0,rv:0,single:0,double:0,passes:0,
+    st:{open:0,reserved:0,continued:0,unpaid:0,fcfs:0,none:0}};
+  lines.forEach(l=>{
+    t.st[l.st||'none']++;
+    if(!l.occ)return;
+    t.resPay+=l.resPay;t.cashPay+=l.cashPay;t.extra+=l.extra;t.total+=l.total;
+    if(!l.active)return;
+    t.occ++;
+    if(l.st==='reserved'||l.st==='fcfs')t.arrivals++;
+    t.campers+=l.campers;
+    if(l.f.residency==='in')t.inS++;else if(l.f.residency==='out')t.outS++;
+    if(l.f.camp&&t.hasOwnProperty(l.f.camp))t[l.f.camp]++;
+    const ty=l.f.siteType||l.site.type||'single';
+    if(ty==='double')t.double++;else t.single++;
+    if(l.f.pass&&l.f.pass!=='none')t.passes++;
+  });
+  return t;
+}
+function datesBetween(a,b){
+  const out=[];let d=a,n=0;
+  while(d<=b&&n<400){out.push(d);d=addDays(d,1);n++;}
+  return out;
+}
+function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
+function toCSV(pairs,cgName,host){
+  const head=['Campground','Host','Date','Site','Status','Envelope/Reservation #','Last name','License plate','Discount pass','Pass #','Reservation status','Single/Double','Reservation payment','Cash payment','Campers','Residency','Camping type','Extra vehicle fee','Total','Nights','Notes'];
+  const col=n=>head.indexOf(n);
+  const dataRow=(d,l)=>{
+    const f=l.f;
+    return [cgName||'',host||'',d,l.site.label,l.st?ST[l.st].label:'Not marked',f.envelope,f.lastName,f.plate,
+      (f.pass&&f.pass!=='none')?PASS[f.pass]:'',f.passNo,RESST[f.resStatus]||'',
+      l.occ?((f.siteType||l.site.type)==='double'?'Double':'Single'):'',
+      l.occ?l.resPay:'',l.occ?l.cashPay:'',l.active?l.campers:'',
+      RES[f.residency]||'',CAMP[f.camp]||'',l.occ?l.extra:'',l.occ?l.total:'',l.occ?(f.nights||''):'',f.notes];
+  };
+  // totals row, built by column name so it always lines up with the header
+  const totalsRow=(dateCell,siteCell,lines)=>{
+    const t=tally(lines),r=head.map(()=>'');
+    r[col('Campground')]=cgName||'';r[col('Host')]=host||'';
+    r[col('Date')]=dateCell;r[col('Site')]=siteCell;
+    r[col('Status')]=t.occ+' occupied';
+    r[col('Discount pass')]=t.passes+(t.passes===1?' pass':' passes');
+    r[col('Single/Double')]='Single '+t.single+' / Double '+t.double;
+    r[col('Reservation payment')]=t.resPay;r[col('Cash payment')]=t.cashPay;r[col('Campers')]=t.campers;
+    r[col('Residency')]='In '+t.inS+' / Out '+t.outS;
+    r[col('Camping type')]='Tent '+t.tent+' / Trailer '+t.trailer+' / RV '+t.rv;
+    r[col('Extra vehicle fee')]=t.extra;r[col('Total')]=t.total;
+    return r;
+  };
+  const order=[],by={};
+  pairs.forEach(p=>{if(!by[p[0]]){by[p[0]]=[];order.push(p[0]);}by[p[0]].push(p[1]);});
+  const out=[head];
+  order.forEach(d=>{
+    by[d].forEach(l=>out.push(dataRow(d,l)));
+    out.push(totalsRow(d,'DAY TOTAL',by[d]));            // daily totals line after each day
+  });
+  if(order.length!==1)out.push(totalsRow('TOTAL','',pairs.map(p=>p[1])));   // grand total when several days
+  return out.map(r=>r.map(csvCell).join(',')).join('\n');
+}
+
+/* ---------- ui: toast, modal, copy ---------- */
+let toastT;
+function toast(msg){
+  const el=$('#toast');el.textContent=msg;el.classList.add('on');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2600);
+}
+let modalEl=null;
+function openModal(html){
+  closeModal();
+  modalEl=document.createElement('div');
+  modalEl.className='overlay modalwrap';
+  modalEl.innerHTML='<div class="modal" role="dialog" aria-modal="true">'+html+'</div>';
+  document.body.appendChild(modalEl);
+  return modalEl;
+}
+function closeModal(){if(modalEl){modalEl.remove();modalEl=null;}}
+function confirmBox(title,msg,okLabel){
+  return new Promise(res=>{
+    const m=openModal('<h3>'+esc(title)+'</h3><p>'+esc(msg)+'</p><div class="btnrow"><button class="btn ghost" data-r="0">Cancel</button><button class="btn danger" data-r="1">'+esc(okLabel)+'</button></div>');
+    m.addEventListener('click',e=>{
+      const b=e.target.closest('[data-r]');
+      if(b){closeModal();res(b.dataset.r==='1');}
+    });
+  });
+}
+async function copyText(text,label){
+  if(NATIVE){try{if(NATIVE.copyText(text)){toast(label+' copied');return;}}catch(e){}}
+  try{await navigator.clipboard.writeText(text);toast(label+' copied');return;}catch(e){}
+  const m=openModal('<h3>'+esc(label)+'</h3><p>Select all of this text and copy it.</p><textarea readonly class="ta">'+esc(text)+'</textarea><div class="btnrow"><button class="btn" data-r="1">Done</button></div>');
+  const ta=$('textarea',m);ta.focus();ta.select();
+  m.addEventListener('click',e=>{if(e.target.closest('[data-r]'))closeModal();});
+}
+
+/* ---------- weekly reports ---------- */
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const WS=()=>root.weekStart==null?1:root.weekStart;
+const slugOf=s=>(String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''))||'x';
+function sortedSitesOf(cg){return cg.sites.slice().sort((a,b)=>String(a.label).localeCompare(String(b.label),undefined,{numeric:true}));}
+function weekStartOf(ds){const diff=(parseD(ds).getDay()-WS()+7)%7;return addDays(ds,-diff);}
+function weekLabel(start){const end=addDays(start,6);return shortDate(start)+' – '+shortDate(end)+', '+end.slice(0,4);}
+function weekData(cg,start){
+  const sites=sortedSitesOf(cg),pairs=[];let days=0;
+  datesBetween(start,addDays(start,6)).forEach(dt=>{
+    const recs=cg.days[dt];
+    if(!recs)return;
+    if(!Object.keys(recs).some(id=>recs[id]&&recs[id].status))return;   // empty day
+    days++;
+    sites.forEach(s=>pairs.push([dt,lineFor(s,recs[s.id])]));
+  });
+  return {pairs:pairs,days:days,t:tally(pairs.map(p=>p[1])),sent:(cg.sent||{})[start]||''};
+}
+function settingsFields(p){
+  return '<div class="fld"><label for="'+p+'host">Your name</label><input id="'+p+'host" data-set="host" value="'+esc(root.host||'')+'" maxlength="60" autocomplete="name" placeholder="First and last name"></div>'+
+    '<div class="fld"><label for="'+p+'mgr">Send reports to (email)</label><input id="'+p+'mgr" type="email" inputmode="email" data-set="mgr" value="'+esc(root.mgr||'')+'" maxlength="120" autocomplete="off" placeholder="management@example.gov"></div>'+
+    '<div class="fld"><label for="'+p+'wk">Week starts on</label><select id="'+p+'wk" data-set="wkStart">'+DAYS.map((d,i)=>'<option value="'+i+'"'+(i===WS()?' selected':'')+'>'+d+'</option>').join('')+'</select></div>';
+}
+function openWeek(){
+  closeWeek();
+  const el=document.createElement('div');
+  el.className='screen';el.id='weekScreen';
+  document.body.appendChild(el);
+  renderWeek();
+}
+function closeWeek(){const w=$('#weekScreen');if(w)w.remove();}
+function renderWeek(){
+  const el=$('#weekScreen');if(!el)return;
+  const info=root.cgs.map(cg=>({cg:cg,d:weekData(cg,ui.wk)}));
+  if(ui.wkSel==null)ui.wkSel=info.filter(x=>x.d.pairs.length).map(x=>x.cg.id);
+  el.innerHTML=
+    '<div class="fhead"><button class="fbtn" data-a="weekClose">Close</button><div class="ft"><b>Weekly reports</b><span>One file per campground</span></div><span style="min-width:76px"></span></div>'+
+    '<div class="fbody">'+settingsFields('wk-')+
+    '<div class="weeknav"><button class="ico2" data-a="wkPrev" aria-label="Previous week">&#8249;</button><div class="weeklabel">'+weekLabel(ui.wk)+'</div><button class="ico2" data-a="wkNext" aria-label="Next week">&#8250;</button></div>'+
+    '<div class="cglist">'+info.map(x=>{
+      const has=x.d.pairs.length>0,on=has&&ui.wkSel.indexOf(x.cg.id)>-1;
+      return '<label class="cgrow wkrow'+(has?'':' off')+'"><input type="checkbox" data-wk="'+x.cg.id+'"'+(on?' checked':'')+(has?'':' disabled')+'><span>'+esc(x.cg.name||'Unnamed campground')+'<small>'+(has?(x.d.days+' of 7 days recorded · cash '+money(x.d.t.cashPay)+(x.d.sent?' · emailed '+shortDate(x.d.sent):' · not sent yet')):'No records this week')+'</small></span></label>';
+    }).join('')+'</div>'+
+    '<p class="hint">Your name and the campground go on every row of every file. The email opens in your mail app, so you can look it over before sending.</p></div>'+
+    '<div class="ffoot"><button class="btn big" id="wk-email" data-a="wkEmail"></button><button class="btn ghost big" id="wk-save" data-a="wkSave" style="margin-top:8px"></button></div>';
+  updateWeekFooter();
+}
+function updateWeekFooter(){
+  const n=ui.wkSel?ui.wkSel.length:0,e=$('#wk-email'),v=$('#wk-save');
+  if(!e||!v)return;
+  e.textContent=(NATIVE?'Email ':'Share ')+n+(n===1?' report':' reports');
+  v.textContent='Save '+n+(n===1?' CSV file':' CSV files');
+  e.disabled=v.disabled=(n===0);
+}
+function selectedWeekFiles(){
+  const host=(root.host||'').trim();
+  return (ui.wkSel||[]).map(id=>root.cgs.find(c=>c.id===id)).filter(Boolean).map(cg=>{
+    const d=weekData(cg,ui.wk);
+    return {cg:cg,d:d,name:slugOf(cg.name)+'_'+ui.wk+(host?'_'+slugOf(host):'')+'.csv',text:toCSV(d.pairs,cg.name,host)};
+  }).filter(f=>f.d.pairs.length);
+}
+async function saveWeekFiles(files){
+  let n=0;
+  if(NATIVE){
+    files.forEach(f=>{if(nativeSave(f.name,'text/csv','\uFEFF'+f.text))n++;});
+    toast(n?('Saved '+n+(n===1?' file':' files')+' to Downloads'):'Could not save the files');
+    return n>0;
+  }
+  if(dlNs){
+    try{
+      for(const f of files){await dlNs.save({filename:f.name,data:'\uFEFF'+f.text});n++;}
+      toast('Saved '+n+(n===1?' file':' files'));return true;
+    }catch(e){if(e&&e.code==='declined')return false;}
+  }
+  copyText(files.map(f=>'--- '+f.name+' ---\n'+f.text).join('\n\n'),'Weekly CSVs');
+  return false;
+}
+function markSent(files){
+  const today=ymd(new Date());
+  files.forEach(f=>{f.cg.sent=f.cg.sent||{};f.cg.sent[ui.wk]=today;});
+  save();renderWeek();
+}
+
+/* ---------- CSV file saving (downloads capability, copy as fallback) ---------- */
+let dlNs;   // undefined = still resolving, null = unavailable
+function slug(){
+  const s=(state.name||'campground').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return s||'campground';
+}
+async function saveCSV(text,filename,label){
+  if(NATIVE){
+    const where=nativeSave(filename,'text/csv','\uFEFF'+text);
+    if(where){toast('Saved to '+where);return;}
+    toast('Could not save the file. Copying instead.');
+  }
+  if(dlNs){
+    try{
+      await dlNs.save({filename:filename,data:'\uFEFF'+text});
+      toast('CSV saved');
+      return;
+    }catch(e){
+      const c=e&&e.code;
+      if(c==='declined')return;
+      if(c==='rate_limited'){toast('Wait a moment, then try again');return;}
+    }
+  }
+  copyText(text,label);
+}
+function initDownloads(){
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      window.claude.use('downloads').then(ns=>{
+        dlNs=ns||null;
+        if(ui.tab==='report'&&!$('#formScreen'))renderReport();
+      }).catch(()=>{dlNs=null;});
+    }else dlNs=null;
+  }catch(e){dlNs=null;}
+}
+
+/* ---------- render: shell ---------- */
+function render(){
+  renderHeader();
+  ['sites','report','setup'].forEach(t=>$('#view-'+t).classList.toggle('on',ui.tab===t));
+  document.querySelectorAll('.tabs button').forEach(b=>{
+    if(b.dataset.tab===ui.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
+  if(ui.tab==='sites')renderSites();
+  else if(ui.tab==='report')renderReport();
+  else renderSetup();
+}
+function renderHeader(){
+  $('#cgTitle').textContent=state.name||'My campground';
+  $('#dateText').textContent=fmtLong(ui.date);
+  $('#dateInput').value=ui.date;
+  $('#datebar').hidden=(ui.tab==='setup');
+  $('#todayBtn').hidden=(ui.date===ymd(new Date()));
+}
+function chipsHtml(counts){
+  return ORDER.concat('none').map(k=>'<span class="chip '+(k==='none'?'none':'s-'+k)+'"><i>'+(k==='none'?'–':ST[k].code)+'</i>'+(k==='none'?'Unmarked':ST[k].short)+'<b>'+(counts[k]||0)+'</b></span>').join('');
+}
+
+/* ---------- render: sites ---------- */
+function seg(name,items,val){
+  return '<div class="seg" role="radiogroup">'+items.map(it=>'<label><input type="radio" name="'+name+'" value="'+it[0]+'"'+(val===it[0]?' checked':'')+'><span>'+esc(it[1])+'</span></label>').join('')+'</div>';
+}
+function markerHtml(s,st){
+  const cls=st?'s-'+st:'none';
+  return '<button class="site '+cls+(s.type==='double'?' double':'')+((ui.edit&&ui.sel===s.id)?' sel':'')+'" data-a="site" data-id="'+s.id+'" style="left:'+s.x+'%;top:'+s.y+'%" aria-label="Site '+esc(s.label)+', '+(st?ST[st].label:'not marked')+'"><span class="n">'+esc(s.label)+'</span><span class="c">'+(st?ST[st].code:'')+'</span></button>';
+}
+function editPanelHtml(){
+  const s=siteById(ui.sel);
+  if(!s)return '<p class="hint">Tap the map to add a site. Drag a site to move it. Tap a site to rename or delete it.</p>';
+  return '<div class="editpanel"><div class="two"><div class="fld"><label for="ed-label">Site name or number</label><input id="ed-label" value="'+esc(s.label)+'" maxlength="8" autocomplete="off"></div><div class="fld"><span class="lbl">Site size</span>'+seg('ed-type',[['single','Single'],['double','Double']],s.type||'single')+'</div></div><div class="btnrow" style="margin-top:0"><button class="btn danger sm" data-a="siteDelete">Delete site</button><button class="btn ghost sm" data-a="deselect">Done with this site</button></div></div>';
+}
+function renderSites(){
+  const v=$('#view-sites'),d=ui.date,recs=state.days[d]||{};
+  const old=$('#view-sites .mapscroll'),keep=old?{l:old.scrollLeft,t:old.scrollTop}:null;
+  if(!mapImg&&!state.sites.length&&!ui.edit){
+    v.innerHTML='<div class="empty"><h2>Set up your campground</h2><p>Add a map of your campground, then place a marker for each site. After that, one tap per site marks its status for the day.</p><div class="btnrow wrap"><button class="btn" data-a="goSetup">Add a map</button><button class="btn ghost" data-a="edit">Place sites</button></div></div>';
+    return;
+  }
+  const counts={open:0,reserved:0,continued:0,unpaid:0,fcfs:0,none:0};
+  state.sites.forEach(s=>{counts[(recs[s.id]||{}).status||'none']++;});
+  let top;
+  if(ui.edit){
+    top='<div class="editbar"><b>Editing sites</b><button class="btn sm" data-a="editdone">Done</button></div>'+editPanelHtml();
+  }else{
+    top='<div class="chips">'+chipsHtml(counts)+'</div><div class="btnrow wrap"><button class="btn sm" data-a="cont">Continue yesterday\'s stays</button><button class="btn sm ghost" data-a="allopen">Mark the rest open</button><button class="btn sm ghost" data-a="edit">Edit sites</button></div>'+(state.sites.length?'':'<p class="hint">No sites yet. Tap Edit sites, then tap the map to place each one.</p>');
+  }
+  const markers=state.sites.map(s=>markerHtml(s,(recs[s.id]||{}).status||null)).join('');
+  const inner=mapImg?'<img src="'+mapImg+'" alt="Campground map">':'';
+  v.innerHTML=top+
+    '<div class="mapbar"><span class="muted">'+state.sites.length+(state.sites.length===1?' site':' sites')+'</span><div class="zoom"><button class="btn sm ghost" data-a="zoomOut" aria-label="Zoom out">−</button><span>'+Math.round(ui.zoom*100)+'%</span><button class="btn sm ghost" data-a="zoomIn" aria-label="Zoom in">+</button></div></div>'+
+    '<div class="mapscroll"><div class="mapinner'+(mapImg?'':' blank')+(ui.edit?' edit':'')+'" style="width:'+(ui.zoom*100)+'%">'+inner+markers+'</div></div>';
+  const ns=$('#view-sites .mapscroll');
+  if(ns&&keep){ns.scrollLeft=keep.l;ns.scrollTop=keep.t;}
+}
+
+/* ---------- render: report ---------- */
+function passText(f){return (f.pass&&f.pass!=='none')?PASS[f.pass]+(f.passNo?' #'+f.passNo:''):'';}
+function renderReport(){
+  const v=$('#view-report'),d=ui.date;
+  const weeklyBtn='<div class="btnrow" style="margin-top:2px"><button class="btn" data-a="weekOpen">Send weekly reports</button></div>';
+  if(!ui.pFrom)ui.pFrom=d.slice(0,8)+'01';
+  if(!ui.pTo)ui.pTo=d;
+  const sites=sortedSites();
+  if(!sites.length){
+    v.innerHTML=weeklyBtn+'<div class="empty"><h2>No sites yet</h2><p>Add your campground map and place your sites, then mark each day. Your daily report builds itself from those marks.</p><button class="btn" data-a="goSetup">Set up campground</button></div>';
+    return;
+  }
+  const recs=state.days[d]||{};
+  const lines=sites.map(s=>lineFor(s,recs[s.id])),t=tally(lines);
+  const rows=lines.map(l=>{
+    const f=l.f;
+    return '<tr><td class="sitecell'+(l.st?' s-'+l.st:'')+'">'+esc(l.site.label)+'</td>'+
+      '<td>'+(l.st?'<span class="pill s-'+l.st+'">'+ST[l.st].short+'</span>':'<span class="muted">Not marked</span>')+'</td>'+
+      '<td>'+esc(f.envelope)+'</td><td>'+esc(f.lastName)+'</td><td>'+esc(f.plate)+'</td>'+
+      '<td>'+esc(passText(f))+'</td><td>'+esc(l.occ?(RESST[f.resStatus]||''):'')+'</td>'+
+      '<td>'+(l.occ?((f.siteType||l.site.type)==='double'?'Double':'Single'):'')+'</td>'+
+      '<td class="num">'+(l.occ?money(l.resPay):'')+'</td><td class="num">'+(l.occ?money(l.cashPay):'')+'</td>'+
+      '<td class="num">'+(l.active?l.campers:'')+'</td><td>'+esc(RES[f.residency]||'')+'</td><td>'+esc(CAMP[f.camp]||'')+'</td>'+
+      '<td class="num">'+(l.occ?money(l.extra):'')+'</td><td class="num">'+(l.occ?money(l.total):'')+'</td></tr>';
+  }).join('');
+  const foot='<tr><td>Totals</td><td>'+t.occ+' occupied</td><td></td><td></td><td></td><td>'+t.passes+(t.passes===1?' pass':' passes')+'</td><td></td><td>Single '+t.single+' · Double '+t.double+'</td>'+
+    '<td class="num">'+money(t.resPay)+'</td><td class="num">'+money(t.cashPay)+'</td><td class="num">'+t.campers+'</td><td>In '+t.inS+' · Out '+t.outS+'</td><td>Tent '+t.tent+' · Trailer '+t.trailer+' · RV '+t.rv+'</td><td class="num">'+money(t.extra)+'</td><td class="num">'+money(t.total)+'</td></tr>';
+  const head=['Site','Status','Envelope / res. #','Last name','License plate','Discount pass','Reservation status','Single / double','Reservation $','Cash $','Campers','In / out of state','Camping type','Extra vehicle $','Total $'];
+  const numCols=[8,9,10,13,14];
+  const thead='<tr>'+head.map((h,i)=>'<th'+(numCols.indexOf(i)>-1?' class="num"':'')+'>'+h+'</th>').join('')+'</tr>';
+
+  let a=ui.pFrom,b=ui.pTo;if(a>b){const x=a;a=b;b=x;}
+  const pLines=[];
+  datesBetween(a,b).forEach(dt=>{
+    if(!state.days[dt])return;
+    sites.forEach(s=>pLines.push(lineFor(s,state.days[dt][s.id])));
+  });
+  const p=tally(pLines);
+
+  v.innerHTML=weeklyBtn+
+    '<h2 style="margin-top:16px">Daily report</h2><p class="muted" style="margin-bottom:10px">'+fmtLong(d)+'</p>'+
+    '<div class="tiles">'+
+      '<div class="tile"><b>'+t.occ+' of '+t.sites+'</b><span>Sites occupied</span></div>'+
+      '<div class="tile"><b>'+t.arrivals+'</b><span>Arrivals</span></div>'+
+      '<div class="tile"><b>'+t.campers+'</b><span>Campers</span></div>'+
+      '<div class="tile"><b>'+money(t.cashPay)+'</b><span>Cash payments</span></div>'+
+      '<div class="tile"><b>'+money(t.resPay)+'</b><span>Reservation payments</span></div>'+
+      '<div class="tile"><b>'+money(t.total)+'</b><span>Total incl. extra vehicle</span></div>'+
+    '</div>'+
+    '<div class="chips rowsp">'+chipsHtml(t.st)+'</div>'+
+    '<div class="tablewrap"><table><thead>'+thead+'</thead><tbody>'+rows+'</tbody><tfoot>'+foot+'</tfoot></table></div>'+
+    '<div class="btnrow"><button class="btn ghost sm" data-a="copyDay">'+((dlNs||NATIVE)?'Save day as CSV file':'Copy day as CSV')+'</button></div>'+
+    '<h2>Period totals</h2>'+
+    '<div class="rangerow"><div class="fld" style="margin:0"><label for="pFrom">From</label><input type="date" id="pFrom" value="'+a+'"></div><div class="fld" style="margin:0"><label for="pTo">To</label><input type="date" id="pTo" value="'+b+'"></div></div>'+
+    '<div class="tiles">'+
+      '<div class="tile"><b>'+p.occ+'</b><span>Site-nights occupied</span></div>'+
+      '<div class="tile"><b>'+p.arrivals+'</b><span>Arrivals</span></div>'+
+      '<div class="tile"><b>'+p.campers+'</b><span>Camper-nights</span></div>'+
+      '<div class="tile"><b>'+money(p.cashPay)+'</b><span>Cash payments</span></div>'+
+      '<div class="tile"><b>'+money(p.resPay)+'</b><span>Reservation payments</span></div>'+
+      '<div class="tile"><b>'+money(p.extra)+'</b><span>Extra vehicle fees</span></div>'+
+      '<div class="tile wide"><b>'+money(p.total)+' total</b><span>In state '+p.inS+' · Out of state '+p.outS+' · Tent '+p.tent+' · Trailer '+p.trailer+' · RV '+p.rv+' · Passes used '+p.passes+'</span></div>'+
+    '</div>'+
+    '<div class="btnrow"><button class="btn ghost sm" data-a="copyPeriod">'+((dlNs||NATIVE)?'Save period as CSV file':'Copy period as CSV')+'</button></div>';
+}
+
+/* ---------- render: setup ---------- */
+function renderSetup(){
+  $('#view-setup').innerHTML=
+    '<h2 style="margin-top:6px">Campground</h2>'+
+    '<div class="fld"><label for="cgNameIn">Campground name</label><input id="cgNameIn" value="'+esc(state.name)+'" maxlength="40" autocomplete="off"></div>'+
+    '<div class="btnrow wrap"><button class="btn ghost sm" data-a="cgMenu">Switch campground</button><button class="btn ghost sm" data-a="cgNew">Add campground</button>'+'<button class="btn danger sm" data-a="cgDelete">Delete this campground</button></div>'+
+    '<p class="hint">Each campground has its own map, sites and daily records. Tap the campground name at the top of any screen to switch.</p>'+
+    '<h2>Weekly reports</h2>'+settingsFields('set-')+
+    '<p class="hint">Used when you send weekly reports from the Reports tab. Your name goes on every row of every file you create.</p>'+
+    '<h2>Map</h2>'+
+    '<div class="mapprev">'+(mapImg?'<img src="'+mapImg+'" alt="Campground map preview">':'<div class="nomap">No map yet</div>')+'</div>'+
+    '<div class="btnrow wrap"><button class="btn" data-a="upload">Upload image</button><button class="btn" data-a="draw">'+(mapImg?'Draw on map':'Draw a map')+'</button>'+(mapImg?'<button class="btn ghost" data-a="removeMap">Remove map</button>':'')+'</div>'+
+    '<p class="hint">Use a photo, screenshot or scan of your campground map, or sketch one with your finger. Then open Sites, tap Edit sites, and tap the map to place each site.</p>'+
+    '<h2>Colors</h2>'+
+    '<ul class="legend">'+ORDER.map(k=>'<li class="s-'+k+'"><i>'+ST[k].code+'</i><span>'+ST[k].label+'</span></li>').join('')+'</ul>'+
+    '<p class="hint">Each color also has a letter, so sites stay readable in bright sun or for color-blind eyes.</p>'+
+    '<h2>Backup</h2>'+
+    '<p class="hint">Your records are stored on this phone. A backup covers all of your campgrounds. Make one now and then and keep it somewhere safe.</p>'+
+    (storageOk?'':'<p class="warn">This browser is blocking storage, so nothing you enter will be kept after you close the page.</p>')+
+    '<div class="btnrow wrap"><button class="btn ghost" data-a="backup">'+(NATIVE?'Save backup file':'Copy backup')+'</button><button class="btn ghost" data-a="restore">Restore backup</button></div>'+
+    '<h2>Clean up</h2>'+
+    '<p class="hint">Removes data from <b>'+esc(state.name||'this campground')+'</b> only. Make a backup first if you might need it back.</p>'+
+    '<div class="btnrow wrap"><button class="btn ghost sm" data-a="cleanRange">Delete records by date</button><button class="btn ghost sm" data-a="cleanAll">Erase all records</button><button class="btn ghost sm" data-a="cleanSites">Delete all sites</button></div>'+
+    '<p class="hint" style="margin-top:18px">'+VERSION+' · storage '+(storageOk?'working':'blocked')+' · '+root.cgs.length+(root.cgs.length===1?' campground':' campgrounds')+' · '+Object.keys(state.days).length+' days recorded here · '+state.sites.length+' sites</p>';
+}
+
+/* ---------- sheet (status picker) ---------- */
+function openSheet(id){
+  closeSheet();
+  ui.sheetSite=id;
+  const s=siteById(id),rec=getRec(ui.date,id)||{},cur=rec.status,f=rec.form||{},occ=OCC.indexOf(cur)>-1;
+  const who=occ?[f.envelope&&('#'+f.envelope),f.lastName,f.plate].filter(Boolean).join(' · '):'';
+  const el=document.createElement('div');
+  el.className='overlay sheetwrap';el.id='sheet';el.dataset.a='sheetClose';
+  el.innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="Site '+esc(s.label)+'">'+
+    '<div class="sheethead"><div><h2>Site '+esc(s.label)+'</h2><p>'+(s.type==='double'?'Double':'Single')+' site · '+fmtLong(ui.date)+'</p></div><button class="ico2" data-a="sheetClose" aria-label="Close">&#10005;</button></div>'+
+    (who?'<p class="who">'+esc(who)+'</p>':'')+
+    '<div class="stbtns">'+ORDER.map(k=>'<button class="stbtn s-'+k+'" data-a="sheetSet" data-st="'+k+'" aria-pressed="'+(cur===k)+'"><i>'+ST[k].code+'</i><span>'+ST[k].label+'</span><b>'+(cur===k?'✓':'')+'</b></button>').join('')+'</div>'+
+    '<div class="btnrow">'+(occ?'<button class="btn ghost" data-a="sheetEdit">Edit details</button>':'')+(cur?'<button class="btn ghost" data-a="sheetClear">Clear mark</button>':'')+'</div></div>';
+  document.body.appendChild(el);
+}
+function closeSheet(){const s=$('#sheet');if(s)s.remove();ui.sheetSite=null;}
+
+/* ---------- arrival form (second screen) ---------- */
+function stepper(id,v,min,ph){
+  return '<div class="stepper"><button type="button" data-a="step" data-for="'+id+'" data-step="-1" aria-label="Decrease">−</button><input id="'+id+'" type="number" inputmode="numeric" min="'+min+'" value="'+((v===''||v==null)?'':v)+'"'+(ph?' placeholder="'+ph+'"':'')+'><button type="button" data-a="step" data-for="'+id+'" data-step="1" aria-label="Increase">+</button></div>';
+}
+function moneyIn(id,v){
+  return '<div class="money"><span>$</span><input class="fin" id="'+id+'" type="number" inputmode="decimal" min="0" step="0.01" value="'+(v?v:'')+'" placeholder="0.00"></div>';
+}
+function openForm(id){
+  closeForm();
+  ui.formSite=id;
+  const s=siteById(id),rec=getRec(ui.date,id),st=(rec&&rec.status)||'reserved';
+  const f=Object.assign(blankForm(s,st),(rec&&rec.form)||{});
+  const el=document.createElement('div');
+  el.className='screen';el.id='formScreen';
+  el.innerHTML=
+    '<div class="fhead s-'+st+'"><button class="fbtn" data-a="formCancel">Cancel</button><div class="ft"><b>Site '+esc(s.label)+'</b><span>'+ST[st].label+' · '+fmtLong(ui.date)+'</span></div><button class="fbtn strong" data-a="formSave">Save</button></div>'+
+    '<div class="fbody">'+
+      '<div class="fld"><label for="f-env">Envelope / reservation number</label><input id="f-env" value="'+esc(f.envelope)+'" autocomplete="off"></div>'+
+      '<div class="two"><div class="fld"><label for="f-name">Last name</label><input id="f-name" value="'+esc(f.lastName)+'" autocomplete="off"></div>'+
+      '<div class="fld"><label for="f-plate">License plate</label><input id="f-plate" value="'+esc(f.plate)+'" autocapitalize="characters" autocomplete="off"></div></div>'+
+      '<div class="fld"><label for="f-resstatus">Reservation status</label><select id="f-resstatus">'+opts(RESST,f.resStatus)+'</select></div>'+
+      '<div class="fld"><span class="lbl">Site size</span>'+seg('f-sitetype',[['single','Single'],['double','Double']],f.siteType)+'</div>'+
+      '<div class="two"><div class="fld"><label for="f-pass">Discount pass used</label><select id="f-pass">'+opts(PASS,f.pass)+'</select></div>'+
+      '<div class="fld" id="passno-wrap"'+(f.pass==='none'?' hidden':'')+'><label for="f-passno">Pass number</label><input id="f-passno" value="'+esc(f.passNo)+'" autocomplete="off"></div></div>'+
+      '<div class="two"><div class="fld"><label for="f-campers">Number of campers</label>'+stepper('f-campers',f.campers,0)+'</div>'+
+      '<div class="fld"><label for="f-nights">Nights (blank if unsure)</label>'+stepper('f-nights',f.nights,1,'Unsure')+'</div></div>'+
+      '<div class="fld"><span class="lbl">Residency</span>'+seg('f-res',[['in','In state'],['out','Out of state']],f.residency)+'</div>'+
+      '<div class="fld"><span class="lbl">Type of camping</span>'+seg('f-camp',[['tent','Tent'],['trailer','Trailer'],['rv','RV']],f.camp)+'</div>'+
+      '<fieldset class="pay"><legend>Amount paid</legend>'+
+        '<div class="two"><div class="fld"><label for="f-respay">Reservation payment</label>'+moneyIn('f-respay',f.resPay)+'</div>'+
+        '<div class="fld"><label for="f-cashpay">Cash payment</label>'+moneyIn('f-cashpay',f.cashPay)+'</div></div>'+
+        '<div class="fld"><label for="f-extra">Extra vehicle fee</label>'+moneyIn('f-extra',f.extraVeh)+'</div>'+
+        '<div class="paytotal"><span>Total</span><b id="f-total">$0.00</b></div>'+
+      '</fieldset>'+
+      '<div class="fld"><label for="f-notes">Notes</label><textarea id="f-notes">'+esc(f.notes)+'</textarea></div>'+
+    '</div>'+
+    '<div class="ffoot"><button class="btn big" data-a="formSave">Save site details</button></div>';
+  document.body.appendChild(el);
+  updateTotal();
+}
+function closeForm(){const f=$('#formScreen');if(f)f.remove();ui.formSite=null;}
+function updateTotal(){
+  const g=id=>{const e=$('#'+id);return e?(parseFloat(e.value)||0):0;};
+  const t=$('#f-total');
+  if(t)t.textContent=money(g('f-respay')+g('f-cashpay')+g('f-extra'));
+}
+function readForm(){
+  const g=id=>$('#'+id).value;
+  const num=id=>Math.max(0,Math.round((parseFloat(g(id))||0)*100)/100);
+  const radio=n=>{const e=document.querySelector('input[name="'+n+'"]:checked');return e?e.value:'';};
+  return {envelope:g('f-env').trim(),lastName:g('f-name').trim(),plate:g('f-plate').trim().toUpperCase(),
+    pass:g('f-pass'),passNo:g('f-passno').trim(),resStatus:g('f-resstatus'),siteType:radio('f-sitetype')||'single',
+    nights:(parseInt(g('f-nights'),10)>0?parseInt(g('f-nights'),10):''),campers:Math.max(0,parseInt(g('f-campers'),10)||0),
+    residency:radio('f-res'),camp:radio('f-camp'),
+    resPay:num('f-respay'),cashPay:num('f-cashpay'),extraVeh:num('f-extra'),notes:g('f-notes').trim()};
+}
+
+/* ---------- drawing screen ---------- */
+const draw={tool:'ink',size:4,undo:[],on:false,last:null,cv:null,ctx:null};
+function openDraw(){
+  closeDraw();
+  const el=document.createElement('div');
+  el.className='screen';el.id='drawScreen';
+  el.innerHTML=
+    '<div class="fhead"><button class="fbtn" data-a="drawCancel">Cancel</button><div class="ft"><b>Draw map</b><span>Sketch roads, water and site loops</span></div><button class="fbtn strong" data-a="drawSave">Use map</button></div>'+
+    '<div class="drawwrap"><canvas id="cv" aria-label="Drawing area"></canvas></div>'+
+    '<div class="drawtools"><div class="tools">'+
+      [['ink','Pen'],['road','Road'],['water','Water'],['trees','Trees'],['erase','Erase']].map(x=>'<button class="tool'+(x[0]==='ink'?' on':'')+'" data-a="tool" data-tool="'+x[0]+'"><i style="background:'+TOOLS[x[0]]+'"></i>'+x[1]+'</button>').join('')+
+    '</div><div class="tools">'+
+      '<button class="tool sz on" data-a="size" data-size="4">Thin</button><button class="tool sz" data-a="size" data-size="9">Medium</button><button class="tool sz" data-a="size" data-size="18">Thick</button>'+
+      '<button class="tool" data-a="undo">Undo</button><button class="tool" data-a="clearDraw">Clear</button>'+
+    '</div></div>';
+  document.body.appendChild(el);
+  draw.tool='ink';draw.size=4;draw.undo=[];
+  const cv=$('#cv'),ctx=cv.getContext('2d');
+  draw.cv=cv;draw.ctx=ctx;
+  const W=1000;
+  const start=(H,img)=>{cv.width=W;cv.height=H;ctx.fillStyle='#F2F4EE';ctx.fillRect(0,0,W,H);if(img)ctx.drawImage(img,0,0,W,H);};
+  if(mapImg){const im=new Image();im.onload=()=>start(Math.round(W*im.naturalHeight/im.naturalWidth),im);im.src=mapImg;}
+  else start(750);
+  const pt=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height};};
+  const style=()=>{ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=TOOLS[draw.tool];ctx.fillStyle=TOOLS[draw.tool];ctx.lineWidth=draw.size*(draw.tool==='erase'?2.5:1);};
+  cv.addEventListener('pointerdown',e=>{
+    e.preventDefault();cv.setPointerCapture(e.pointerId);
+    draw.undo.push(ctx.getImageData(0,0,cv.width,cv.height));
+    if(draw.undo.length>10)draw.undo.shift();
+    draw.on=true;const p=pt(e);draw.last=p;style();
+    ctx.beginPath();ctx.arc(p.x,p.y,ctx.lineWidth/2,0,Math.PI*2);ctx.fill();
+  });
+  cv.addEventListener('pointermove',e=>{
+    if(!draw.on)return;
+    const p=pt(e);style();
+    ctx.beginPath();ctx.moveTo(draw.last.x,draw.last.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+    draw.last=p;
+  });
+  const end=()=>{draw.on=false;};
+  cv.addEventListener('pointerup',end);
+  cv.addEventListener('pointercancel',end);
+}
+function closeDraw(){const d=$('#drawScreen');if(d)d.remove();draw.cv=null;draw.ctx=null;draw.undo=[];}
+
+/* ---------- image upload ---------- */
+function loadImageFile(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1600,sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const w=Math.round(img.naturalWidth*sc),h=Math.round(img.naturalHeight*sc);
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+      mapImg=c.toDataURL('image/jpeg',0.82);saveMap();
+      render();
+      toast(state.sites.length?'Map saved. Use Edit sites to nudge markers into place.':'Map saved');
+    };
+    img.onerror=()=>toast('That file could not be read as an image.');
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---------- actions ---------- */
+const A={};
+A.tab=t=>{ui.tab=t.dataset.tab;ui.edit=false;ui.sel=null;$('#main').scrollTop=0;render();};
+A.goSetup=()=>{ui.tab='setup';render();};
+A.prevDay=()=>{ui.date=addDays(ui.date,-1);render();};
+A.nextDay=()=>{ui.date=addDays(ui.date,1);render();};
+A.today=()=>{ui.date=ymd(new Date());render();};
+A.cont=()=>continueStays();
+A.allopen=()=>markRestOpen();
+A.edit=()=>{ui.tab='sites';ui.edit=true;ui.sel=null;render();};
+A.editdone=()=>{ui.edit=false;ui.sel=null;render();};
+A.deselect=()=>{ui.sel=null;render();};
+A.zoomIn=()=>{ui.zoom=Math.min(4,ui.zoom+0.5);render();};
+A.zoomOut=()=>{ui.zoom=Math.max(1,ui.zoom-0.5);render();};
+A.site=t=>{if(ui.edit)return;openSheet(t.dataset.id);};
+A.siteDelete=async()=>{
+  const s=siteById(ui.sel);if(!s)return;
+  let n=0;
+  Object.keys(state.days).forEach(d=>{const r=state.days[d][s.id];if(r&&r.status)n++;});
+  const msg=n?('Its '+n+(n===1?' daily record':' daily records')+' will be erased too.'):'It has no daily records.';
+  if(await confirmBox('Delete site '+s.label+'?',msg,'Delete site')){
+    state.sites=state.sites.filter(x=>x.id!==s.id);
+    Object.keys(state.days).forEach(d=>{delete state.days[d][s.id];});
+    ui.sel=null;save();render();
+  }
+};
+A.sheetClose=(t,e)=>{if(t.classList.contains('sheetwrap')&&e.target!==t)return;closeSheet();};
+A.sheetSet=t=>{
+  const id=ui.sheetSite,st=t.dataset.st;
+  setStatus(id,st);closeSheet();render();
+  if(st==='reserved'||st==='fcfs')openForm(id);
+};
+A.sheetEdit=()=>{const id=ui.sheetSite;closeSheet();openForm(id);};
+A.sheetClear=()=>{
+  const id=ui.sheetSite,r=getRec(ui.date,id);
+  if(r){r.status=null;delete r.manual;save();}
+  closeSheet();render();
+};
+A.formCancel=()=>closeForm();
+A.formSave=()=>{
+  const id=ui.formSite,rec=getRec(ui.date,id);
+  if(!rec){closeForm();return;}
+  rec.form=readForm();
+  if(!rec.arrival)rec.arrival=ui.date;
+  save();
+  const s=siteById(id);
+  closeForm();render();
+  toast('Site '+(s?s.label:'')+' saved');
+};
+A.step=t=>{
+  const i=$('#'+t.dataset.for),min=parseInt(i.min,10)||0;
+  i.value=Math.max(min,(parseInt(i.value,10)||0)+parseInt(t.dataset.step,10));
+};
+A.upload=()=>$('#fileIn').click();
+A.draw=()=>openDraw();
+A.tool=t=>{
+  draw.tool=t.dataset.tool;
+  document.querySelectorAll('#drawScreen .tool[data-tool]').forEach(b=>b.classList.toggle('on',b===t));
+};
+A.size=t=>{
+  draw.size=parseInt(t.dataset.size,10);
+  document.querySelectorAll('#drawScreen .sz').forEach(b=>b.classList.toggle('on',b===t));
+};
+A.undo=()=>{const s=draw.undo.pop();if(s&&draw.ctx)draw.ctx.putImageData(s,0,0);};
+A.clearDraw=()=>{
+  if(!draw.ctx)return;
+  draw.undo.push(draw.ctx.getImageData(0,0,draw.cv.width,draw.cv.height));
+  draw.ctx.fillStyle='#F2F4EE';draw.ctx.fillRect(0,0,draw.cv.width,draw.cv.height);
+};
+A.drawSave=()=>{
+  if(!draw.cv)return;
+  mapImg=draw.cv.toDataURL('image/jpeg',0.85);saveMap();
+  closeDraw();render();toast('Map saved');
+};
+A.drawCancel=async()=>{
+  if(draw.undo.length&&!(await confirmBox('Discard drawing?','Your changes to this map will be lost.','Discard')))return;
+  closeDraw();
+};
+A.removeMap=async()=>{
+  if(await confirmBox('Remove the map?','Site markers stay where they are, but the map image is deleted.','Remove map')){mapImg='';saveMap();render();}
+};
+A.backup=()=>{
+  const txt=backupText();
+  if(NATIVE){
+    const where=nativeSave('camphost-backup-'+ymd(new Date())+'.json','application/json',txt);
+    if(where){toast('Backup saved to '+where);return;}
+  }
+  copyText(txt,'Backup');
+};
+A.restore=()=>{
+  const m=openModal('<h3>Restore backup</h3><p>Choose a backup file, or paste the backup text. This replaces everything currently saved, including all campgrounds.</p><div class="btnrow" style="margin:0 0 10px"><button class="btn ghost" data-r="f">Choose backup file</button></div><input type="file" id="rs-file" accept="*/*" hidden><textarea class="ta" id="rs-text" placeholder="Or paste backup text here"></textarea><p class="warn" id="rs-err" hidden></p><div class="btnrow"><button class="btn ghost" data-r="0">Cancel</button><button class="btn danger" data-r="1">Replace my data</button></div>');
+  m.addEventListener('change',e=>{
+    if(e.target.id==='rs-file'&&e.target.files&&e.target.files[0]){
+      e.target.files[0].text().then(t=>{$('#rs-text').value=t;}).catch(()=>{const er=$('#rs-err');er.textContent='Could not read that file.';er.hidden=false;});
+    }
+  });
+  m.addEventListener('click',e=>{
+    const b=e.target.closest('[data-r]');if(!b)return;
+    if(b.dataset.r==='0'){closeModal();return;}
+    if(b.dataset.r==='f'){$('#rs-file').click();return;}
+    try{
+      const o=JSON.parse($('#rs-text').value);
+      let nr,maps={};
+      if(o&&o.root&&Array.isArray(o.root.cgs)&&o.root.cgs.length){nr=toRoot(o.root);maps=o.maps||{};}
+      else if(o&&o.state&&Array.isArray(o.state.sites)&&typeof o.state.days==='object'){nr=toRoot(o.state);maps={c1:typeof o.map==='string'?o.map:''};}
+      else throw new Error('bad');
+      root.cgs.forEach(c=>writeMap(c.id,''));
+      let ok=true;
+      nr.cgs.forEach(c=>{if(!writeMap(c.id,typeof maps[c.id]==='string'?maps[c.id]:''))ok=false;});
+      root=nr;state=curCg();root.cur=state.id;mapImg=loadMap(state.id);
+      save();closeModal();ui.sel=null;ui.edit=false;ui.zoom=1;ui.pFrom=null;ui.pTo=null;render();
+      toast(ok?'Backup restored':'Restored, but a map image was too large to keep');
+    }catch(err){
+      const er=$('#rs-err');er.textContent='That is not a valid backup.';er.hidden=false;
+    }
+  });
+};
+A.modalClose=()=>closeModal();
+A.cgMenu=()=>{
+  openModal('<h3>Campgrounds</h3><div class="cglist">'+root.cgs.map(c=>'<div class="cgline"><button class="cgrow'+(c===state?' on':'')+'" data-a="cgSwitch" data-id="'+c.id+'"><span>'+esc(c.name||'Unnamed campground')+'<small>'+c.sites.length+(c.sites.length===1?' site':' sites')+'</small></span><b>'+(c===state?'✓':'')+'</b></button><button class="cgdel" data-a="cgDeleteId" data-id="'+c.id+'" aria-label="Delete '+esc(c.name||'campground')+'">Delete</button></div>').join('')+'</div><div class="btnrow"><button class="btn ghost" data-a="modalClose">Close</button><button class="btn" data-a="cgNew">Add campground</button></div>');
+};
+A.cgSwitch=t=>{closeModal();switchCg(t.dataset.id);};
+A.cgNew=()=>{
+  openModal('<h3>Add campground</h3><div class="fld"><label for="cg-new-name">Campground name</label><input id="cg-new-name" maxlength="40" autocomplete="off" placeholder="For example, Big Creek Campground"></div><div class="btnrow"><button class="btn ghost" data-a="modalClose">Cancel</button><button class="btn" data-a="cgCreate">Create</button></div>');
+  setTimeout(()=>{const i=$('#cg-new-name');if(i)i.focus();},60);
+};
+A.cgCreate=()=>{
+  const i=$('#cg-new-name');
+  const name=(i&&i.value.trim())||('Campground '+(root.cgs.length+1));
+  const id=nextCgId();
+  root.cgs.push(newCg(id,name));
+  closeModal();ui.tab='sites';
+  switchCg(id);
+  toast('Added '+name+'. Add its map in Setup.');
+};
+async function deleteCampground(c){
+  const only=root.cgs.length<2;
+  const msg=(only?'This is your only campground, so it will be replaced by a blank one. ':'')+'Its map, sites and all daily records will be erased from this phone. Make a backup first if you might need them.';
+  if(!(await confirmBox('Delete "'+(c.name||'this campground')+'"?',msg,'Delete campground')))return false;
+  const idx=root.cgs.indexOf(c);
+  root.cgs.splice(idx,1);
+  writeMap(c.id,'');
+  if(!root.cgs.length){const id=nextCgId();root.cgs.push(newCg(id,'My campground'));switchCg(id);}
+  else if(c===state){switchCg(root.cgs[Math.max(0,idx-1)].id);}
+  else{save();render();}
+  toast('Campground deleted');
+  return true;
+}
+A.cgDelete=()=>deleteCampground(state);
+A.cgDeleteId=async t=>{
+  const c=root.cgs.find(x=>x.id===t.dataset.id);
+  if(c)await deleteCampground(c);
+  A.cgMenu();
+};
+A.copyDay=()=>{
+  const recs=state.days[ui.date]||{};
+  const pairs=sortedSites().map(s=>[ui.date,lineFor(s,recs[s.id])]);
+  saveCSV(toCSV(pairs,state.name,root.host),slug()+'-report-'+ui.date+'.csv','Daily report CSV');
+};
+A.copyPeriod=()=>{
+  let a=ui.pFrom,b=ui.pTo;if(a>b){const x=a;a=b;b=x;}
+  const pairs=[],sites=sortedSites();
+  datesBetween(a,b).forEach(dt=>{
+    if(!state.days[dt])return;
+    sites.forEach(s=>pairs.push([dt,lineFor(s,state.days[dt][s.id])]));
+  });
+  if(!pairs.length){toast('No records in that date range');return;}
+  saveCSV(toCSV(pairs,state.name,root.host),slug()+'-report-'+a+'-to-'+b+'.csv','Period CSV');
+};
+
+function recordsInRange(cg,from,to){
+  let recs=0,days=0;
+  Object.keys(cg.days).forEach(d=>{
+    if(d<from||d>to)return;
+    const n=Object.keys(cg.days[d]).filter(id=>cg.days[d][id]&&cg.days[d][id].status).length;
+    if(n){days++;recs+=n;}
+  });
+  return {days:days,recs:recs};
+}
+function updateCleanPreview(){
+  const f=$('#cl-from'),t=$('#cl-to'),pv=$('#cl-prev'),go=$('#cl-go');
+  if(!f||!t||!pv||!go)return;
+  let a=f.value,b=t.value;
+  if(!a||!b){pv.textContent='Choose both dates.';go.disabled=true;return;}
+  if(a>b){const x=a;a=b;b=x;}
+  const r=recordsInRange(state,a,b);
+  pv.textContent=r.recs?(r.days+(r.days===1?' day':' days')+' with '+r.recs+(r.recs===1?' site record':' site records')+' will be erased.'):'No records in that range.';
+  go.disabled=!r.recs;
+}
+A.cleanRange=()=>{
+  const d=ui.date;
+  openModal('<h3>Delete records by date</h3><p>Erases the daily records of '+esc(state.name||'this campground')+' between these dates, including both. Sites and the map are not touched. For one day, use the same date twice.</p><div class="rangerow"><div class="fld" style="margin:0"><label for="cl-from">From</label><input type="date" id="cl-from" value="'+d+'"></div><div class="fld" style="margin:0"><label for="cl-to">To</label><input type="date" id="cl-to" value="'+d+'"></div></div><p class="hint" id="cl-prev"></p><div class="btnrow"><button class="btn ghost" data-a="modalClose">Cancel</button><button class="btn danger" id="cl-go" data-a="cleanGo">Delete records</button></div>');
+  updateCleanPreview();
+};
+A.cleanGo=()=>{
+  const f=$('#cl-from'),t=$('#cl-to');if(!f||!t||!f.value||!t.value)return;
+  let a=f.value,b=t.value;if(a>b){const x=a;a=b;b=x;}
+  const r=recordsInRange(state,a,b);
+  Object.keys(state.days).forEach(d=>{if(d>=a&&d<=b)delete state.days[d];});
+  save();closeModal();render();
+  toast('Erased '+r.recs+(r.recs===1?' record':' records'));
+};
+A.cleanAll=async()=>{
+  const r=recordsInRange(state,'0000-01-01','9999-12-31');
+  if(!r.recs){toast('There are no records to erase');return;}
+  if(await confirmBox('Erase all records?','All '+r.recs+' site records ('+r.days+(r.days===1?' day':' days')+') of '+(state.name||'this campground')+' will be erased. Its map and sites stay.','Erase records')){
+    state.days={};state.sent={};save();render();toast('Records erased');
+  }
+};
+A.cleanSites=async()=>{
+  if(!state.sites.length){toast('There are no sites to delete');return;}
+  if(await confirmBox('Delete all '+state.sites.length+' sites?','All site markers and all daily records of '+(state.name||'this campground')+' will be erased. The map image stays.','Delete sites')){
+    state.sites=[];state.days={};state.sent={};state.nextId=1;ui.sel=null;save();render();toast('Sites deleted');
+  }
+};
+A.weekOpen=()=>{ui.wk=weekStartOf(ui.date);ui.wkSel=null;openWeek();};
+A.weekClose=()=>closeWeek();
+A.wkPrev=()=>{ui.wk=addDays(ui.wk,-7);ui.wkSel=null;renderWeek();};
+A.wkNext=()=>{ui.wk=addDays(ui.wk,7);ui.wkSel=null;renderWeek();};
+A.wkSave=async()=>{
+  const files=selectedWeekFiles();
+  if(!files.length){toast('Select a campground that has records');return;}
+  await saveWeekFiles(files);
+};
+A.wkEmail=async()=>{
+  const files=selectedWeekFiles();
+  if(!files.length){toast('Select a campground that has records');return;}
+  const host=(root.host||'').trim();
+  if(!host){toast('Enter your name first. It goes on every row.');const i=$('#wk-host');if(i)i.focus();return;}
+  const label=weekLabel(ui.wk);
+  const subject=(files.length===1?'Weekly report – '+files[0].cg.name+' – ':'Weekly reports – ')+host+' – '+label;
+  const body='Weekly report from '+host+'\nWeek: '+label+'\n\n'+
+    files.map(f=>'• '+f.cg.name+': '+f.d.days+' of 7 days recorded, cash '+money(f.d.t.cashPay)+', reservation '+money(f.d.t.resPay)+', extra vehicle '+money(f.d.t.extra)).join('\n')+
+    '\n\nCSV '+(files.length===1?'file':'files')+' attached.';
+  if(NATIVE){
+    let err='';
+    try{err=NATIVE.shareFiles(JSON.stringify({to:(root.mgr||'').trim(),subject:subject,body:body,files:files.map(f=>({name:f.name,text:'\uFEFF'+f.text}))}));}
+    catch(e){err=String(e);}
+    if(err){toast('Could not open your email app: '+err);return;}
+    markSent(files);
+    return;
+  }
+  try{
+    const fl=files.map(f=>new File(['\uFEFF'+f.text],f.name,{type:'text/csv'}));
+    if(navigator.canShare&&navigator.canShare({files:fl})){await navigator.share({files:fl,title:subject,text:body});markSent(files);return;}
+  }catch(e){if(e&&e.name==='AbortError')return;}
+  toast('Emailing attachments works in the Android app. Saving the files instead.');
+  await saveWeekFiles(files);
+};
+
+/* ---------- events ---------- */
+let drag=null,lastDragEnd=0;
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-a]');
+  if(t){const fn=A[t.dataset.a];if(fn)fn(t,e);return;}
+  // tap on empty map area while editing = add a site
+  if(ui.edit&&e.target.closest('.mapinner')&&!e.target.closest('.site')){
+    if(performance.now()-lastDragEnd<400)return;
+    const r=$('.mapinner').getBoundingClientRect();
+    const s={id:'s'+(state.nextId++),label:nextLabel(),x:+clamp((e.clientX-r.left)/r.width*100).toFixed(2),y:+clamp((e.clientY-r.top)/r.height*100).toFixed(2),type:'single'};
+    state.sites.push(s);ui.sel=s.id;save();render();
+  }
+});
+document.addEventListener('pointerdown',e=>{
+  if(!ui.edit)return;
+  const m=e.target.closest('.site');
+  if(!m||!m.closest('.mapinner'))return;
+  try{m.setPointerCapture(e.pointerId);}catch(err){}
+  drag={id:m.dataset.id,el:m,sx:e.clientX,sy:e.clientY,moved:false};
+});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<6)return;
+  drag.moved=true;
+  const inner=$('.mapinner');if(!inner)return;
+  const r=inner.getBoundingClientRect(),s=siteById(drag.id);if(!s)return;
+  s.x=+clamp((e.clientX-r.left)/r.width*100).toFixed(2);
+  s.y=+clamp((e.clientY-r.top)/r.height*100).toFixed(2);
+  drag.el.style.left=s.x+'%';drag.el.style.top=s.y+'%';
+});
+function endDrag(){
+  if(!drag)return;
+  const d=drag;drag=null;lastDragEnd=performance.now();
+  if(d.moved){save();}
+  else{ui.sel=d.id;render();}
+}
+document.addEventListener('pointerup',endDrag);
+document.addEventListener('pointercancel',endDrag);
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='dateInput'){if(t.value){ui.date=t.value;render();}}
+  else if(t.id==='pFrom'){if(t.value){ui.pFrom=t.value;renderReport();}}
+  else if(t.id==='pTo'){if(t.value){ui.pTo=t.value;renderReport();}}
+  else if(t.id==='cl-from'||t.id==='cl-to'){updateCleanPreview();}
+  else if(t.id==='f-pass'){const w=$('#passno-wrap');if(w)w.hidden=(t.value==='none');}
+  else if(t.name==='ed-type'){const s=siteById(ui.sel);if(s){s.type=t.value;save();render();}}
+  else if(t.id==='ed-label'){const s=siteById(ui.sel);if(s&&!t.value.trim())t.value=s.label;}
+  else if(t.id==='fileIn'){if(t.files&&t.files[0])loadImageFile(t.files[0]);t.value='';}
+  else if(t.dataset&&t.dataset.wk){
+    ui.wkSel=(ui.wkSel||[]).filter(x=>x!==t.dataset.wk);
+    if(t.checked)ui.wkSel.push(t.dataset.wk);
+    updateWeekFooter();
+  }
+  else if(t.dataset&&t.dataset.set==='wkStart'){
+    root.weekStart=parseInt(t.value,10);save();
+    if($('#weekScreen')){ui.wk=weekStartOf(ui.wk);ui.wkSel=null;renderWeek();}
+  }
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='cgNameIn'){state.name=t.value;save();renderHeader();}
+  else if(t.id==='ed-label'){
+    const s=siteById(ui.sel),v=t.value.trim();
+    if(s&&v){
+      s.label=v;save();
+      const n=document.querySelector('.site[data-id="'+s.id+'"] .n');if(n)n.textContent=v;
+    }
+  }
+  else if(t.dataset&&(t.dataset.set==='host'||t.dataset.set==='mgr')){root[t.dataset.set]=t.value;save();}
+  else if(t.classList&&t.classList.contains('fin'))updateTotal();
+});
+
+/* ---------- Android back button (called from the app wrapper; unused in a browser) ---------- */
+window.onAndroidBack=function(){
+  if(modalEl){closeModal();return true;}
+  if($('#drawScreen')){A.drawCancel();return true;}
+  if($('#weekScreen')){closeWeek();return true;}
+  if($('#formScreen')){closeForm();return true;}
+  if($('#sheet')){closeSheet();return true;}
+  if(ui.edit){ui.edit=false;ui.sel=null;render();return true;}
+  if(ui.tab!=='sites'){ui.tab='sites';render();return true;}
+  return false;
+};
+
+/* ---------- start ---------- */
+load();
+render();
+initDownloads();
+if(!storageOk)toast('This browser is blocking storage. Records will not be kept.');
+})();
+</script>
+</body>
+</html>
